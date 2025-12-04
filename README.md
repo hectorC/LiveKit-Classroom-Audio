@@ -1,6 +1,6 @@
 # LiveKit Classroom Audio
 
-This project lets you send audio from one teacher computer to many listeners on the same Wi‑Fi network. Latency stays very low so the class hears things almost instantly.
+This project lets you send audio from one teacher computer to many listeners on the same Wi‑Fi network using WebRTC. Latency stays very low so the class hears things almost instantly.
 
 ## What you need
 
