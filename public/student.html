@@ -3,13 +3,52 @@
 
 <head>
   <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>LiveKit Classroom – Student</title>
+  <link rel="stylesheet" href="/styles.css" />
 </head>
 
-<body>
-  <h1>Classroom Audio – Student Listener</h1>
-  <p>Status: <span id="status">Not connected</span></p>
-  <button id="listenBtn">Listen</button>
+<body class="page page--student">
+  <main class="shell">
+    <header class="hero">
+      <span class="hero__tag">Student Portal</span>
+      <h1>Immerse in the Studio Feed</h1>
+      <p>Breathe in a shimmering stream of live sound. One click tunes you into the teacher console with almost no
+        delay.</p>
+    </header>
+
+    <section class="panel">
+      <div class="status-block">
+        <span class="status-label">Status</span>
+        <span class="status-pill" id="statusPill" data-state="disconnected">
+          <span id="status">Not connected</span>
+        </span>
+      </div>
+
+      <div class="control-grid">
+        <div>
+          <label>&nbsp;</label>
+          <button id="listenBtn" type="button">Listen</button>
+        </div>
+      </div>
+
+      <div class="timeline">
+        <div class="timeline__step">
+          <span class="timeline__dot"></span>
+          <span class="timeline__text">Tap Listen to request a secure pass for this room.</span>
+        </div>
+        <div class="timeline__step">
+          <span class="timeline__dot"></span>
+          <span class="timeline__text">Stay on the page while the connection stabilizes and syncs.</span>
+        </div>
+        <div class="timeline__step">
+          <span class="timeline__dot"></span>
+          <span class="timeline__text">Enjoy the mix—your headphones auto-play as soon as sound arrives.</span>
+        </div>
+      </div>
+      <p class="footer-note">Listener lane • Auto reconnect • Local network only</p>
+    </section>
+  </main>
 
   <!-- LiveKit JS SDK (served locally for offline LAN use) -->
   <script src="/livekit-client.umd.min.js"></script>
@@ -17,11 +56,17 @@
   <script>
     const statusEl = document.getElementById('status');
     const button = document.getElementById('listenBtn');
+    const statusPill = document.getElementById('statusPill');
 
     const wsUrl = "ws://" + window.location.hostname + ":7880";
 
     let room = null;
     let isListening = false;
+
+    function updateStatus(message, state = 'disconnected') {
+      statusEl.textContent = message;
+      statusPill.dataset.state = state;
+    }
 
     async function fetchStudentToken() {
       const res = await fetch("/token/student");
@@ -53,7 +98,7 @@
 
     async function start() {
       try {
-        statusEl.textContent = "Connecting...";
+        updateStatus("Connecting...", 'disconnected');
 
         const token = await fetchStudentToken();
 
@@ -73,25 +118,25 @@
           if (track.kind === LivekitClient.Track.Kind.Audio) {
             // Create and auto-play audio element
             track.attach();
-            statusEl.textContent = "Listening to " + participant.identity;
+            updateStatus("Listening to " + participant.identity, 'connected');
             isListening = true;
           }
         });
 
         room.on(LivekitClient.RoomEvent.Disconnected, () => {
-          statusEl.textContent = "Disconnected";
+          updateStatus("Disconnected", 'disconnected');
           button.disabled = false;
         });
 
         await room.connect(wsUrl, token);
         if (!isListening) {
-          statusEl.textContent = "Connected. Waiting for teacher audio...";
+          updateStatus("Connected. Waiting for teacher audio...", 'disconnected');
         }
         button.disabled = true;
 
       } catch (e) {
         console.error(e);
-        statusEl.textContent = "Error: " + e;
+        updateStatus("Error: " + e, 'error');
       }
     }
 

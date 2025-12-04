@@ -3,16 +3,60 @@
 
 <head>
   <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>LiveKit Classroom – Teacher</title>
+  <link rel="stylesheet" href="/styles.css" />
 </head>
 
-<body>
-  <h1>Teacher Audio Publisher</h1>
-  <p>Status: <span id="status">Not connected</span></p>
-  <label for="deviceSelect">Audio source:</label>
-  <select id="deviceSelect"></select>
-  <button id="refreshDevices">Refresh devices</button>
-  <button id="connectBtn">Connect &amp; Publish Audio</button>
+<body class="page page--teacher">
+  <main class="shell">
+    <header class="hero">
+      <span class="hero__tag">Teacher Console</span>
+      <h1>Broadcast Studio Control</h1>
+      <p>Route any creative audio source into the classroom space. Pick a device, go live, and let the mix flow.
+      </p>
+    </header>
+
+    <section class="panel">
+      <div class="status-block">
+        <span class="status-label">Status</span>
+        <span class="status-pill" id="statusPill" data-state="disconnected">
+          <span id="status">Not connected</span>
+        </span>
+      </div>
+
+      <div class="control-grid">
+        <div>
+          <label for="deviceSelect">Audio source</label>
+          <select id="deviceSelect"></select>
+        </div>
+        <div>
+          <label>&nbsp;</label>
+          <button id="refreshDevices" type="button">Refresh devices</button>
+        </div>
+        <div>
+          <label>&nbsp;</label>
+          <button id="connectBtn" type="button">Connect &amp; Publish Audio</button>
+        </div>
+      </div>
+
+      <div class="timeline">
+        <div class="timeline__step">
+          <span class="timeline__dot"></span>
+          <span class="timeline__text">Use Refresh to reveal every connected interface or virtual cable.</span>
+        </div>
+        <div class="timeline__step">
+          <span class="timeline__dot"></span>
+          <span class="timeline__text">When you connect, the room opens instantly for every listener.</span>
+        </div>
+        <div class="timeline__step">
+          <span class="timeline__dot"></span>
+          <span class="timeline__text">Disconnect to free the lane and let another set take over.</span>
+        </div>
+      </div>
+      <p class="footer-note">LiveKit stream • Stereo opus • LAN only</p>
+    </section>
+  </main>
 
   <!-- LiveKit JS SDK (served locally for offline LAN use) -->
   <script src="/livekit-client.umd.min.js"></script>
@@ -22,12 +66,18 @@
     const button = document.getElementById('connectBtn');
     const deviceSelect = document.getElementById('deviceSelect');
     const refreshBtn = document.getElementById('refreshDevices');
+    const statusPill = document.getElementById('statusPill');
 
     // LiveKit server URL based on current host
     const wsUrl = "ws://" + window.location.hostname + ":7880";
 
     let room = null;
     let audioDevices = [];
+
+    function updateStatus(message, state = 'disconnected') {
+      statusEl.textContent = message;
+      statusPill.dataset.state = state;
+    }
 
     async function populateAudioInputs(requestAccess = false) {
       try {
@@ -91,7 +141,7 @@
 
     async function start() {
       try {
-        statusEl.textContent = "Connecting...";
+        updateStatus("Connecting...", 'disconnected');
 
         // 1. Get a teacher token
         const token = await fetchTeacherToken();
@@ -103,16 +153,16 @@
         const selectedDeviceId = deviceSelect.value;
         if (!selectedDeviceId) {
           alert("Select an audio input before connecting.");
-          statusEl.textContent = "Select an input device";
+          updateStatus("Select an input device", 'error');
           return;
         }
 
         room = new LivekitClient.Room();
         await room.connect(wsUrl, token);
-        statusEl.textContent = "Connected. Initializing audio input...";
+        updateStatus("Connected. Initializing audio input...", 'connected');
 
         room.on(LivekitClient.RoomEvent.Disconnected, () => {
-          statusEl.textContent = "Disconnected";
+          updateStatus("Disconnected", 'disconnected');
           button.disabled = false;
         });
 
@@ -136,12 +186,12 @@
         });
 
         console.log("Published track:", pub);
-        statusEl.textContent = `Publishing stereo audio from ${deviceSelect.selectedOptions[0].textContent}.`;
+        updateStatus(`Publishing stereo audio from ${deviceSelect.selectedOptions[0].textContent}.`, 'connected');
         button.disabled = true;
 
       } catch (e) {
         console.error(e);
-        statusEl.textContent = "Error: " + e;
+        updateStatus("Error: " + e, 'error');
       }
     }
 

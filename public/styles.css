@@ -1,0 +1,307 @@
+:root {
+  --ink: #f8f7ff;
+  --muted: rgba(248, 247, 255, 0.65);
+  --bg: #040012;
+  --bg-secondary: #0d022b;
+  --accent: #ff5f8f;
+  --accent-2: #7c5dff;
+  --accent-3: #08f7fe;
+  --card: rgba(8, 3, 30, 0.75);
+  --border: rgba(255, 255, 255, 0.08);
+  --success: #5ef38c;
+  --danger: #ff3d7f;
+  --shadow: 0 30px 80px rgba(7, 1, 25, 0.45);
+}
+
+@font-face {
+  font-family: "SpaceGrotesk";
+  src: url("/assets/fonts/SpaceGrotesk.woff2") format("woff2");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(circle at 20% 20%, rgba(255, 95, 143, 0.25), transparent 45%),
+    radial-gradient(circle at 80% 0%, rgba(8, 247, 254, 0.2), transparent 40%),
+    linear-gradient(135deg, var(--bg), var(--bg-secondary));
+  color: var(--ink);
+  font-family: "SpaceGrotesk", "Gill Sans", "Trebuchet MS", sans-serif;
+  font-size: clamp(15px, 1vw + 11px, 18px);
+  overflow-x: hidden;
+}
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  mix-blend-mode: screen;
+  opacity: 0.25;
+  z-index: 0;
+}
+
+body::before {
+  background-image: radial-gradient(circle at 10% 60%, rgba(255, 255, 255, 0.15), transparent 50%),
+    radial-gradient(circle at 90% 20%, rgba(255, 95, 143, 0.2), transparent 40%);
+}
+
+body::after {
+  background-image: url("data:image/svg+xml,%3Csvg width='160' height='160' viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 80 Q80 0 160 80 T320 80' stroke='%23ffffff15' stroke-width='8' fill='none'/%3E%3C/svg%3E");
+  background-size: 180px;
+  opacity: 0.08;
+}
+
+.page {
+  position: relative;
+  z-index: 1;
+  padding: 3rem clamp(1.5rem, 4vw, 4rem) 4rem;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+}
+
+.shell {
+  width: min(1100px, 100%);
+  display: grid;
+  gap: 2.5rem;
+  padding-top: 1rem;
+}
+
+.hero {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.hero__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.2em;
+  color: var(--muted);
+}
+
+.hero__tag::before {
+  content: "";
+  width: 36px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-3));
+}
+
+.hero h1 {
+  margin: 0.5rem 0;
+  font-size: clamp(2.4rem, 6vw, 4rem);
+  letter-spacing: 0.05em;
+}
+
+.hero p {
+  max-width: 42ch;
+  color: var(--muted);
+  line-height: 1.6;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 30px;
+  padding: clamp(1.5rem, 3vw, 2.5rem);
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 2rem;
+}
+
+.status-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.status-label {
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1.2rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+  font-weight: 600;
+}
+
+.status-pill[data-state="connected"] {
+  color: var(--success);
+}
+
+.status-pill[data-state="disconnected"] {
+  color: var(--muted);
+}
+
+.status-pill[data-state="error"] {
+  color: var(--danger);
+}
+
+.control-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.2rem;
+  align-items: end;
+}
+
+label {
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+select,
+button,
+input[type="text"] {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 0.9rem 1.2rem;
+  font-size: 1rem;
+  font-family: inherit;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ink);
+  transition: border 0.2s ease, transform 0.2s ease;
+}
+
+select:focus,
+button:focus-visible {
+  outline: none;
+  border-color: var(--accent-3);
+  box-shadow: 0 0 0 3px rgba(8, 247, 254, 0.2);
+}
+
+button {
+  background: linear-gradient(120deg, var(--accent), var(--accent-2));
+  border: none;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+  box-shadow: 0 15px 35px rgba(255, 95, 143, 0.3);
+}
+
+button:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.01);
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.page--student .panel {
+  border-radius: 40px 10px 40px 10px;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+.timeline__step {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.timeline__dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent-3);
+  box-shadow: 0 0 18px rgba(8, 247, 254, 0.6);
+}
+
+.timeline__text {
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+.footer-note {
+  font-size: 0.8rem;
+  color: var(--muted);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 900px) {
+  .page {
+    padding: 2rem clamp(1rem, 5vw, 2.5rem) 3rem;
+  }
+
+  .hero,
+  .panel,
+  .timeline__text {
+    text-align: left;
+  }
+
+  .hero h1 {
+    font-size: clamp(2rem, 8vw, 3rem);
+  }
+
+  .shell {
+    gap: 2rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .panel {
+    border-radius: 24px;
+  }
+
+  button,
+  select {
+    border-radius: 16px;
+  }
+
+  body::before,
+  body::after {
+    display: none;
+  }
+
+  .page {
+    padding: 1.5rem 1rem 2.5rem;
+  }
+
+  .hero,
+  .panel,
+  .status-block,
+  .timeline {
+    text-align: left;
+  }
+
+  .control-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  button {
+    width: 100%;
+  }
+
+  .status-pill {
+    justify-content: flex-start;
+  }
+}

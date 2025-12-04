@@ -40,7 +40,7 @@ This project lets you send audio from one teacher computer to many listeners on 
    2. Click **Refresh devices** if the input list is empty.
    3. Pick the audio device that carries your mix (Virtual Audio Cable, USB mixer, etc.).
    4. Press **Connect & Publish Audio**. The page sends that input to LiveKit in high-quality stereo.
-   5. This is a bare-bones version but with some HTML and CSS knowledge `teacher.html` or `student.html` can be customized to your desired visual design (making sure you keep the script section and key elements intact).
+   5. The UI is a template version but with some HTML and CSS knowledge `teacher.html`, `student.html` and `sytle.css` can be customized to your desired visual design (making sure you keep the script section and key interactive elements intact).
 
 - **Student devices**
    1. Go to `http://<server-ip>:3000` or the friendly name (e.g. `http://classroom:3000`). The home page automatically shows the listener controls.
@@ -53,3 +53,8 @@ Depending on network infrastructure, up to 200 students can listen at once (you 
 - **“Token” errors** – these are the security codes given to each browser. Make sure the Node.js window (running `node server.js`) is still open, and confirm the API key/secret in `server.js` match the ones in `classroom.yaml`.
 - **LiveKit script missing** – if you see `LivekitClient is not defined`, ensure `public/livekit-client.umd.min.js` exists. The file ships with this project so you can run without Internet access.
 - **Can’t reach LiveKit** – from a student device, open `http://<server-ip>:7880`. If you see `ok`, the LiveKit engine is reachable. If not, check firewall rules or Wi‑Fi isolation.
+
+## Licensing notes
+
+- The UI uses the Space Grotesk font, licensed under the [SIL Open Font License](https://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=OFL). Keep that license with the font if you redistribute or customize it.
+- The browser bundle `livekit-client.umd.min.js` is part of LiveKit Client, which is distributed under the [Apache License 2.0](https://github.com/livekit/livekit-client-js/blob/main/LICENSE). Include that license notice if you redistribute the bundle separately.
