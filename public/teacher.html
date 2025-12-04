@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <title>LiveKit Classroom – Teacher</title>
+</head>
+
+<body>
+  <h1>Teacher Audio Publisher</h1>
+  <p>Status: <span id="status">Not connected</span></p>
+  <label for="deviceSelect">Audio source:</label>
+  <select id="deviceSelect"></select>
+  <button id="refreshDevices">Refresh devices</button>
+  <button id="connectBtn">Connect &amp; Publish Audio</button>
+
+  <!-- LiveKit JS SDK (served locally for offline LAN use) -->
+  <script src="/livekit-client.umd.min.js"></script>
+
+  <script>
+    const statusEl = document.getElementById('status');
+    const button = document.getElementById('connectBtn');
+    const deviceSelect = document.getElementById('deviceSelect');
+    const refreshBtn = document.getElementById('refreshDevices');
+
+    // LiveKit server URL based on current host
+    const wsUrl = "ws://" + window.location.hostname + ":7880";
+
+    let room = null;
+    let audioDevices = [];
+
+    async function populateAudioInputs(requestAccess = false) {
+      try {
+        if (requestAccess) {
+          const tempStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          tempStream.getTracks().forEach(track => track.stop());
+        }
+      } catch (err) {
+        console.warn('Microphone permission denied or unavailable:', err);
+      }
+
+      audioDevices = (await navigator.mediaDevices.enumerateDevices())
+        .filter(d => d.kind === "audioinput");
+
+      deviceSelect.innerHTML = "";
+      if (!audioDevices.length) {
+        const opt = document.createElement('option');
+        opt.value = "";
+        opt.textContent = "No audio inputs found";
+        deviceSelect.appendChild(opt);
+        return;
+      }
+
+      audioDevices.forEach(device => {
+        const opt = document.createElement('option');
+        opt.value = device.deviceId;
+        opt.textContent = device.label || `Input ${device.deviceId}`;
+        deviceSelect.appendChild(opt);
+      });
+    }
+
+    async function fetchTeacherToken() {
+      const res = await fetch("/token/teacher");
+      const data = await res.json();
+
+      console.log("Teacher identity:", data.identity);
+      console.log("Raw token value from server:", data.token);
+
+      let token = data.token;
+
+      // If the token comes back as an object, try to extract the actual JWT
+      if (typeof token === "object" && token !== null) {
+        if (typeof token.jwt === "string") {
+          token = token.jwt;
+        } else if (typeof token.token === "string") {
+          token = token.token;
+        } else {
+          // Last resort: stringify it so we can see what it is
+          console.warn("Unexpected token object shape:", token);
+          token = JSON.stringify(token);
+        }
+      }
+
+      token = String(token);
+      console.log("Teacher token typeof (fixed):", typeof token);
+      console.log("Teacher token sample:", token.slice(0, 40));
+
+      return token;
+    }
+
+
+    async function start() {
+      try {
+        statusEl.textContent = "Connecting...";
+
+        // 1. Get a teacher token
+        const token = await fetchTeacherToken();
+        console.log("Teacher token typeof:", typeof token);
+        console.log("Teacher token sample:", token.slice(0, 40));
+
+
+        // 2. Create and connect room
+        const selectedDeviceId = deviceSelect.value;
+        if (!selectedDeviceId) {
+          alert("Select an audio input before connecting.");
+          statusEl.textContent = "Select an input device";
+          return;
+        }
+
+        room = new LivekitClient.Room();
+        await room.connect(wsUrl, token);
+        statusEl.textContent = "Connected. Initializing audio input...";
+
+        room.on(LivekitClient.RoomEvent.Disconnected, () => {
+          statusEl.textContent = "Disconnected";
+          button.disabled = false;
+        });
+
+        // 3. Create a hi-fi stereo audio track from the chosen device
+        const audioTrack = await LivekitClient.createLocalAudioTrack({
+          deviceId: selectedDeviceId,
+          channelCount: 2,
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false,
+        });
+
+        console.log("Local track settings:", audioTrack.mediaStreamTrack.getSettings());
+
+        // 5. Publish with high-quality stereo preset
+        const pub = await room.localParticipant.publishTrack(audioTrack, {
+          audioPreset: LivekitClient.AudioPresets.musicHighQualityStereo,
+          dtx: false,
+          red: false,
+          forceStereo: true,
+        });
+
+        console.log("Published track:", pub);
+        statusEl.textContent = `Publishing stereo audio from ${deviceSelect.selectedOptions[0].textContent}.`;
+        button.disabled = true;
+
+      } catch (e) {
+        console.error(e);
+        statusEl.textContent = "Error: " + e;
+      }
+    }
+
+    button.addEventListener('click', start);
+    refreshBtn.addEventListener('click', () => populateAudioInputs(true));
+    if (navigator.mediaDevices?.addEventListener) {
+      navigator.mediaDevices.addEventListener('devicechange', () => populateAudioInputs());
+    }
+    populateAudioInputs(true);
+  </script>
+</body>
+
+</html>

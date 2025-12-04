@@ -1,0 +1,35 @@
+# classroom.yaml
+# Minimal LiveKit config for local LAN audio-only classroom
+
+# Main HTTP / WebSocket port
+port: 7880
+
+# Listen on all interfaces so LAN clients can connect
+bind_addresses:
+  - 0.0.0.0
+
+# Simple logging
+log_level: info
+
+# WebRTC / media settings
+rtc:
+  # LAN use only, no need to discover external IP
+  use_external_ip: false
+
+# Room behavior
+room:
+  # Auto-create rooms when clients join
+  auto_create: true
+
+  # Allow lots of students
+  max_participants: 200
+
+  # Restrict to Opus audio only (no video)
+  enabled_codecs:
+    - mime: audio/opus
+      fmtp_line: ""
+
+# API key/secret pair used to generate tokens
+# (key = CLASSROOM_KEY, secret = devsecret)
+keys:
+  CLASSROOM_KEY: devsecret

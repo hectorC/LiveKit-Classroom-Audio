@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <title>LiveKit Classroom – Student</title>
+</head>
+
+<body>
+  <h1>Classroom Audio – Student Listener</h1>
+  <p>Status: <span id="status">Not connected</span></p>
+  <button id="listenBtn">Listen</button>
+
+  <!-- LiveKit JS SDK (served locally for offline LAN use) -->
+  <script src="/livekit-client.umd.min.js"></script>
+
+  <script>
+    const statusEl = document.getElementById('status');
+    const button = document.getElementById('listenBtn');
+
+    const wsUrl = "ws://" + window.location.hostname + ":7880";
+
+    let room = null;
+    let isListening = false;
+
+    async function fetchStudentToken() {
+      const res = await fetch("/token/student");
+      const data = await res.json();
+
+      console.log("Student identity:", data.identity);
+      console.log("Raw student token value from server:", data.token);
+
+      let token = data.token;
+
+      if (typeof token === "object" && token !== null) {
+        if (typeof token.jwt === "string") {
+          token = token.jwt;
+        } else if (typeof token.token === "string") {
+          token = token.token;
+        } else {
+          console.warn("Unexpected student token object shape:", token);
+          token = JSON.stringify(token);
+        }
+      }
+
+      token = String(token);
+      console.log("Student token typeof (fixed):", typeof token);
+      console.log("Student token sample:", token.slice(0, 40));
+
+      return token;
+    }
+
+
+    async function start() {
+      try {
+        statusEl.textContent = "Connecting...";
+
+        const token = await fetchStudentToken();
+
+        room = new LivekitClient.Room();
+
+        room.on(LivekitClient.RoomEvent.ParticipantConnected, (p) => {
+          console.log("Participant connected:", p.identity);
+        });
+
+        room.on(LivekitClient.RoomEvent.TrackPublished, (pub, participant) => {
+          console.log("Track published by", participant.identity, pub);
+        });
+
+        room.on(LivekitClient.RoomEvent.TrackSubscribed, (track, publication, participant) => {
+          console.log("Track subscribed:", track, "from", participant.identity);
+
+          if (track.kind === LivekitClient.Track.Kind.Audio) {
+            // Create and auto-play audio element
+            track.attach();
+            statusEl.textContent = "Listening to " + participant.identity;
+            isListening = true;
+          }
+        });
+
+        room.on(LivekitClient.RoomEvent.Disconnected, () => {
+          statusEl.textContent = "Disconnected";
+          button.disabled = false;
+        });
+
+        await room.connect(wsUrl, token);
+        if (!isListening) {
+          statusEl.textContent = "Connected. Waiting for teacher audio...";
+        }
+        button.disabled = true;
+
+      } catch (e) {
+        console.error(e);
+        statusEl.textContent = "Error: " + e;
+      }
+    }
+
+    button.addEventListener('click', start);
+  </script>
+</body>
+
+</html>
