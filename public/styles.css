@@ -180,8 +180,24 @@ input[type="text"] {
   font-size: 1rem;
   font-family: inherit;
   background: rgba(255, 255, 255, 0.04);
+  background-color: rgba(255, 255, 255, 0.04);
   color: var(--ink);
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
   transition: border 0.2s ease, transform 0.2s ease;
+}
+
+select option {
+  background-color: #12062d;
+  color: var(--ink);
+}
+
+select option:checked,
+select option:hover,
+select option:focus {
+  background-color: #2a0e4f;
+  color: var(--ink);
 }
 
 select:focus,
