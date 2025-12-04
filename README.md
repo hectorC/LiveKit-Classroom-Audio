@@ -46,7 +46,7 @@ This project lets you send audio from one teacher computer to many listeners on 
    1. Go to `http://<server-ip>:3000` or the friendly name (e.g. `http://classroom:3000`). The home page automatically shows the listener controls.
    2. Tap **Listen**. The page grabs a one-time access code, connects to LiveKit over the local network, and starts playing audio as soon as the teacher is live.
 
-Up to 200 students can listen at once (you can change the limit inside `classroom.yaml`).
+Depending on network infrastructure, up to 200 students can listen at once (you can change the limit inside `classroom.yaml`).
 
 ## Troubleshooting
 
