@@ -62,6 +62,46 @@
 
     let room = null;
     let isListening = false;
+    let attachedAudioTrack = null;
+    let wakeLock = null;
+
+    // Reusable audio element (more reliable on mobile than anonymous detached elements)
+    const audioEl = document.createElement('audio');
+    audioEl.autoplay = true;
+    audioEl.playsInline = true;
+    audioEl.controls = false;
+    audioEl.preload = 'auto';
+    audioEl.style.display = 'none';
+    document.body.appendChild(audioEl);
+
+    async function requestWakeLock() {
+      // Best-effort: keeps screen from auto-locking, which helps avoid background audio throttling on Android.
+      if (!('wakeLock' in navigator)) return;
+      try {
+        if (wakeLock) return;
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLock.addEventListener('release', () => {
+          console.log('Wake lock released');
+          wakeLock = null;
+        });
+        console.log('Wake lock acquired');
+      } catch (e) {
+        console.warn('Wake lock request failed:', e);
+        wakeLock = null;
+      }
+    }
+
+    function releaseWakeLock() {
+      try {
+        if (wakeLock) {
+          wakeLock.release();
+        }
+      } catch (e) {
+        console.warn('Wake lock release failed:', e);
+      } finally {
+        wakeLock = null;
+      }
+    }
 
     function updateStatus(message, state = 'disconnected') {
       statusEl.textContent = message;
@@ -100,6 +140,24 @@
       try {
         updateStatus("Connecting...", 'disconnected');
 
+        // Keep the device from auto-locking while listening (when supported).
+        requestWakeLock();
+
+        // Prime audio playback on the user gesture (helps with mobile autoplay policies)
+        // Important: don't await here, some browsers may leave the promise pending
+        // when there is no media source yet, which would block connecting.
+        audioEl.muted = true;
+        try {
+          const primePromise = audioEl.play();
+          if (primePromise && typeof primePromise.catch === 'function') {
+            primePromise.catch(() => { /* ignore; we'll retry after attach */ });
+          }
+        } catch (_) {
+          // Ignore; we'll retry once a real track is attached.
+        }
+        // Unmute shortly after priming so real audio can play once attached.
+        setTimeout(() => { audioEl.muted = false; }, 0);
+
         const token = await fetchStudentToken();
 
         room = new LivekitClient.Room();
@@ -116,8 +174,23 @@
           console.log("Track subscribed:", track, "from", participant.identity);
 
           if (track.kind === LivekitClient.Track.Kind.Audio) {
-            // Create and auto-play audio element
-            track.attach();
+            // Attach to a single persistent audio element (more reliable on mobile / lock-unlock)
+            try {
+              if (attachedAudioTrack && attachedAudioTrack !== track) {
+                attachedAudioTrack.detach(audioEl);
+              }
+            } catch (e) {
+              console.warn('Failed detaching previous audio track:', e);
+            }
+
+            track.attach(audioEl);
+            attachedAudioTrack = track;
+
+            // Best-effort: ensure playback is active
+            const playPromise = audioEl.play();
+            if (playPromise && typeof playPromise.catch === 'function') {
+              playPromise.catch((e) => console.warn('audioEl.play() was blocked or failed:', e));
+            }
             updateStatus("Listening to " + participant.identity, 'connected');
             isListening = true;
           }
@@ -126,6 +199,17 @@
         room.on(LivekitClient.RoomEvent.Disconnected, () => {
           updateStatus("Disconnected", 'disconnected');
           button.disabled = false;
+          isListening = false;
+          releaseWakeLock();
+          try {
+            if (attachedAudioTrack) {
+              attachedAudioTrack.detach(audioEl);
+            }
+          } catch (e) {
+            console.warn('Failed detaching audio on disconnect:', e);
+          } finally {
+            attachedAudioTrack = null;
+          }
         });
 
         await room.connect(wsUrl, token);
@@ -141,6 +225,20 @@
     }
 
     button.addEventListener('click', start);
+
+    // When returning from lock/background, try to resume audio playback.
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && isListening) {
+        requestWakeLock();
+        const playPromise = audioEl.play();
+        if (playPromise && typeof playPromise.catch === 'function') {
+          playPromise.catch((e) => console.warn('audioEl.play() retry failed:', e));
+        }
+      }
+    });
+
+    // Release wake lock when navigating away.
+    window.addEventListener('pagehide', () => releaseWakeLock());
   </script>
 </body>
 
