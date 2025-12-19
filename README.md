@@ -53,6 +53,12 @@ Depending on network infrastructure, up to 200 students can listen at once (you 
 - **“Token” errors** – these are the security codes given to each browser. Make sure the Node.js window (running `node server.js`) is still open, and confirm the API key/secret in `server.js` match the ones in `classroom.yaml`.
 - **LiveKit script missing** – if you see `LivekitClient is not defined`, ensure `public/livekit-client.umd.min.js` exists. The file ships with this project so you can run without Internet access.
 - **Can’t reach LiveKit** – from a student device, open `http://<server-ip>:7880`. If you see `ok`, the LiveKit engine is reachable. If not, check firewall rules or Wi‑Fi isolation.
+- **Android: audio stops when the screen turns off** – some Android devices will pause or throttle the browser when the phone goes to sleep (even while audio is playing). The most reliable fix is to exclude the browser from battery optimization / sleeping apps.
+   1. Open your phone’s **Settings**.
+   2. Tap **Apps**.
+   3. Find and select your browser (for example **Chrome** or **Edge**).
+   4. Tap **Battery** or **App battery usage**.
+   5. Select **Unrestricted** (or enable **Allow background usage**).
 
 ## Licensing notes
 
